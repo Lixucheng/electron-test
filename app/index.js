@@ -1,3 +1,8 @@
 import Logger from '../logger';
+import electron from 'electron';
 
-const log = new Logger();
+new Logger({
+  dataDir: electron.remote.app.getPath('appData'),
+  path: 'localhost:8000',
+  deviceId: 'electron'
+});

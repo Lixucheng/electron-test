@@ -1,7 +1,4 @@
-import electron, {
-  dialog
-} from 'electron';
-
+import electron from 'electron';
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -14,6 +11,8 @@ app.on('ready', () => {
       devTools: true
     }
   });
-  win.loadURL(`file://${__dirname}/index.html`);
+  win.loadURL(`file://${__dirname}/app/index.html`);
   win.webContents.openDevTools();
 });
+
+export default app;
