@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import fileStorage from './file';
 import Socket from './socket';
+import fetch from 'node-fetch';
 
 const lastLogFileItem = 'lastLogFile';
 // filename: deviceid-2016/09/01-12.txt
@@ -26,6 +27,7 @@ export class LogService extends EventEmitter {
     }
     this.localStorage = localStorage;
     const lastFile = this.localStorage.getItem(lastLogFileItem);
+    this.file = lastFile;
     if (!lastFile) {
       // 如果是第一次运行 直接创建新文件就行了
       await this.createNewFile();
@@ -66,7 +68,7 @@ export class LogService extends EventEmitter {
   }
 
   pushBind() {
-    const socket = new Socket(this.options.wsPath);
+    const socket = new Socket(this.options.wsPath, this.options.deviceId);
     const action = this.pushAction.bind(this);
     socket.on('onmessage', action);
     // socket.removeListener('push', action);
@@ -90,7 +92,7 @@ export class LogService extends EventEmitter {
       `${this.dir}/${this.options.deviceId}-${date}-${num}.txt`;
     fileName = path.normalize(fileName);
     await this.fs.writeFile(fileName, '');
-
+    console.info('createNewLogFile:' + fileName);
     this.file = fileName;
     this.localStorage.setItem(lastLogFileItem, this.file.toString());
     return fileName;
@@ -133,7 +135,6 @@ export class LogService extends EventEmitter {
       await this.writeLog(item);
     }
   }
-
 
   // 写入文件
   async writeLog(str) {
@@ -178,8 +179,8 @@ export class LogService extends EventEmitter {
       if (this.getFileType(file) === '.txt' && this.file) {
         const stat = await this.fs.stat(path.join(this.dir, file));
         if (startTime && endTime) {
-          if (stat.birthtime >= new Date(startTime)
-            && stat.birthtime <= new Date(endTime)) {
+          if (stat.birthtime >= new Date(startTime) &&
+            stat.birthtime <= new Date(endTime)) {
             if (file === this.getFileName(this.file)) {
               // 如果上传的是正在使用的,新建一个文件
               await this.createNewFile(this.file);
@@ -242,12 +243,13 @@ export class LogService extends EventEmitter {
       }
     };
 
-    fetch({
-      url: this.options.path,
+    fetch('http://localhost:3000/upload', {
+      method: 'POST',
       headers: {
         'Content-Type': `multipart/form-data; boundary="${boundaryKey}"`,
         'Accept-Encoding': 'gzip'
       },
+      compress: true,
       body: dataStream
     })
     .then((json) => {

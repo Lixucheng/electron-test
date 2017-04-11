@@ -19,7 +19,7 @@ export default class Logger {
       path: '',
       deviceId: '',
       saveDays: 10,
-      wsPath: '127.0.0.1:8181'
+      wsPath: 'ws://127.0.0.1:8181'
     };
     if (options.deviceId) {
       if (options.dataDir) {
@@ -40,4 +40,9 @@ export default class Logger {
       console.error("deviceId can't be null");
     }
   }
+  log(str) {
+    LogService.log(str);
+  }
 }
+
+module.exports = Logger;

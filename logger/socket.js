@@ -1,19 +1,19 @@
-import URL from 'url'
-import { EventEmitter } from 'events';
+import {
+  EventEmitter
+} from 'events';
 
 export default class socket extends EventEmitter {
-  constructor(host) {
+  constructor(url, deviceId) {
     super();
-    const url = URL.format({
-      protocol: 'ws',
-      host,
-      pathname: ''
-    })
     const socket = new WebSocket(url);
     this.socket = socket;
 
     socket.onopen = () => {
       console.log('websocket is connected with' + url);
+      this.send({
+        type: 'regist',
+        deviceId: deviceId
+      });
     };
 
     window.send = (e) => socket.send(e);
@@ -23,6 +23,9 @@ export default class socket extends EventEmitter {
     };
   }
   send(e) {
+    if (typeof e === 'object') {
+      e = JSON.stringify(e)
+    }
     this.socket.send(e);
   }
 }
