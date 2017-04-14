@@ -75,8 +75,8 @@ export class LogService extends EventEmitter {
   }
 
   pushAction(e) {
-    if (e) {
-      const { startTime, endTime } = e || {};
+    if (e && e.type === 'upload') {
+      const { startTime, endTime } = e;
       this.upload(startTime, endTime);
     }
   }

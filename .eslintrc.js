@@ -18,5 +18,8 @@ module.exports = {
             "named": "ignore",
             "asyncArrow": "ignore"
         }],
+    },
+    "global": {
+        "WebSocket": true
     }
 };
