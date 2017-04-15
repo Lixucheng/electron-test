@@ -18,8 +18,11 @@ module.exports = {
             "named": "ignore",
             "asyncArrow": "ignore"
         }],
+        "comma-dangle": 'off'
     },
     "global": {
-        "WebSocket": true
+        "WebSocket": true,
+        "localStorage": true,
+        "FormData": true,
     }
 };

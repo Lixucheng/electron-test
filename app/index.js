@@ -37,3 +37,7 @@ function logCount(num) {
 window.logCount = logCount;
 // log(10000);
 // console.log('do');
+
+
+import Perf from '../Performance';
+Perf.initService();
