@@ -40,4 +40,4 @@ window.logCount = logCount;
 
 
 import Perf from '../Performance';
-Perf.initService();
+Perf.initService('5905846023a7757cc466d96c');

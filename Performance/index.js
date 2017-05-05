@@ -1,10 +1,10 @@
 import process from 'process';
 import fetch, { postFetch } from './fetch';
 import config from './config';
-import queryString from 'query-string';
 
 export class Perf {
-  async initService() {
+  async initService(token) {
+    this.token = token;
     // 计算耗时用
     this.timers = {};
     // 周期上传用
@@ -13,12 +13,21 @@ export class Perf {
 
     this.interval();
 
+    window.addEventListener('DOMContentLoaded', () => {
+      this.increment('counter.pv', 1);
+    })
+    window.addEventListener('load', () => {
+      const response = performance.timing.responseEnd - performance.timing.responseStart;
+      this.timing('timing.response', response);
+      const load =  performance.timing.loadEventStart - performance.timing.navigationStart;
+      this.timing('timing.load', load);
+    });
     window.perf = {
       timing: (name, time, tags) => this.timing(name, time, tags),
       increment: (name, delta, tags) => this.increment(name, delta, tags),
       gauge: (name, value, tags) => this.gauge(name, value, tags),
       startTime: (name) => this.startTime(name),
-      _stopTime: (name, tags) => this._stopTime(name, tags),
+      stopTime: (name, tags) => this.stopTime(name, tags),
       list: () => {
         return {
           data: this.dataList,
@@ -42,7 +51,7 @@ export class Perf {
   interval() {
     this.intervalTimer = setInterval(() => {
       this.startSend();
-    }, 60000);
+    }, 2000);
   }
 
   // 向队列中添加一个记录
@@ -96,9 +105,11 @@ export class Perf {
 
   // 开始上传
   async startSend() {
-    const online = await this.live();
-    if (!online) return;
+    // TODO
+    // const online = await this.live();
+    // if (!online) return;
     if (!this.dataList.length) return;
+    console.log('send:', this.dataList)
     const list = [];
     // 简单的数据聚合： 数值求和
     while (this.dataList.length) {
@@ -174,11 +185,11 @@ export class Perf {
     }
     this.timers[name] = Date.now();
     return {
-      stop: (tags) => this._stopTime(name, tags),
+      stop: (tags) => this.stopTime(name, tags),
     };
   }
 
-  _stopTime(name, tags) {
+  stopTime(name, tags) {
     // 若没有 start，则直接 return;
     if (typeof this.timers[name] === 'undefined') {
       return;
@@ -201,7 +212,7 @@ export class Perf {
     const data = this.transformData(listObj);
 
     this.dataList = [];
-    postFetch(`${config.host}perf/add`, {
+    postFetch(`${config.host}perf/data/add`, {
       body: JSON.stringify(data)
     });
   }
@@ -211,7 +222,7 @@ export class Perf {
     if (Array.isArray(list) && list.length) {
       const data = {
         env: {
-          token: config.perf_token,
+          token: this.token,
         },
       };
       data.data = [];
@@ -221,6 +232,9 @@ export class Perf {
           metrics: e.data,
           tags: Object.assign({}, e.tags, {
             deviceOs: `${process.platform}-${process.arch}`,
+            page: location.pathname,
+            browser: navigator.userAgent.match(/chrome\/[\d.]+/gi)[0],
+            device: navigator.userAgent.match(/Electron\/[\d.]+/gi)[0] || navigator.userAgent.match(/nw\/[\d.]+/gi)[0]
             // posVersion: localStorage.getItem('lastAppVersion'),
           }),
         });
